@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "web-page",
+			"path": "web-page"
+		},
+		{
+			"name": "esp",
+			"path": "esp"
+		}
+	],
+	"settings": {}
+}
