@@ -1,0 +1,16 @@
+{
+  "name": "Van IOT",
+  "short_name": "Van IOT",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00796B",
+  "description": "Controla los ventiladores desde una app",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "612x612",
+      "type": "image/png"
+    }
+  ]
+}
