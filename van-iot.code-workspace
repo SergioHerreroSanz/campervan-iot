@@ -1,12 +1,12 @@
 {
 	"folders": [
 		{
-			"name": "web-page",
-			"path": "web-page"
+			"name": "ventilation-fan",
+			"path": "ventilation-fan"
 		},
 		{
-			"name": "esp",
-			"path": "esp"
+			"name": "web-page",
+			"path": "web-page"
 		}
 	],
 	"settings": {
