@@ -1,0 +1,16 @@
+<div style="padding: 2rem">
+  <button (click)="connectToDevice()">Conectar con BLE</button>
+
+  <div style="margin-top: 2rem">
+    <label for="pwm-slider">PWM:</label>
+    <input
+      id="pwm-slider"
+      type="range"
+      min="0"
+      max="256"
+      [value]="sliderValue"
+      (input)="onSliderChange($event)"
+    />
+    <span>{{ sliderValue }}</span>
+  </div>
+</div>
