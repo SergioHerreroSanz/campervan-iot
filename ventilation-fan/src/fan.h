@@ -1,19 +1,21 @@
 #pragma once
 
 #include <Arduino.h>
+#include <tempSensor.h>
 
 // Definir la configuración del ventilador (usando PWM)
 #define PWM_PIN 12
 #define PWM_CHANNEL 0
 #define PWM_FREQUENCY 1000
 constexpr int PWM_RESOLUTION = 8;
-#define UPDATE_FREQUENCY 200; // Every 20s
-#define USER_TEMP_TARGET 25; // In celsius
-#define TEMP_HYSTERESIS 1.0f; // In celsius
-#define MIN_FAN_POWER 20 // Percentage
+#define UPDATE_FREQUENCY 200 // Every 20s
+#define USER_TEMP_TARGET 25  // In celsius
+#define TEMP_HYSTERESIS 1.0f // In celsius
+#define MIN_FAN_POWER 20     // Percentage
 #define FAN_CURVE 0.45f
 
-enum FanMode {
+enum FanMode
+{
     FAN_MODE_MANUAL = 0,
     FAN_MODE_AUTO = 1
 };
@@ -30,21 +32,31 @@ void initFan()
     ledcAttachPin(PWM_PIN, PWM_CHANNEL);
 }
 
-void setFanMode(FanMode mode){
+void setFanMode(FanMode mode)
+{
     fanMode = mode;
 }
 
-void setFanManualPowerTarget(uint16_t power){
+void changePWM(uint16_t targetValue)
+{
+    ledcWrite(PWM_CHANNEL, targetValue);
+}
+
+void setFanManualPowerTarget(uint16_t power)
+{
     fanManualPowerTarget = power;
     changePWM(power);
 }
 
-void updateFanAutoControlPower() {
-    if (millis() - lastTimeMeasurement > UPDATE_FREQUENCY){
-        lastTimeUpdated = millis();
-    
+uint32_t lastFanTimeMeasurement = 0;
+void updateFanAutoControlPower()
+{
+    if (millis() - lastFanTimeMeasurement > UPDATE_FREQUENCY)
+    {
+        lastFanTimeMeasurement = millis();
+
         float extTemp = getTempAverage();
-        float intTemp = getTemp(TEMP_CURRENT_AVG_SIZE);
+        float intTemp = getTemp();
         float userTemp = USER_TEMP_TARGET;
         float targetTemp = min(userTemp, extTemp);
 
@@ -59,8 +71,9 @@ void updateFanAutoControlPower() {
 
         float tempDiff = abs(intTemp - targetTemp);
         // Temperatura interior superior a la deseada
-        if (isFanOn ? intTemp > targetTemp : intTemp > targetTemp + TEMP_HYSTERESIS) {
-            float factor = 1.0f - exp(-tempDiff * FAN_CURVE);
+        if (isFanOn ? intTemp > targetTemp : intTemp > targetTemp + TEMP_HYSTERESIS)
+        {
+            float factor = 1.0f - exp(tempDiff * FAN_CURVE);
             factor = constrain(factor, 0.0f, 1.0f);
 
             uint16_t maxPWM = pow(2, PWM_RESOLUTION) - 1;
@@ -69,23 +82,20 @@ void updateFanAutoControlPower() {
             uint16_t power = minPWM + ((maxPWM - minPWM) * factor);
             changePWM(power);
             isFanOn = true;
+        }
         // Temperatura interior inferior a la deseada
-        } else if (tempDiff > TEMP_HYSTERESIS) {
-            // Solo apagar el ventilador si está claramente por debajo del objetivo
+        else if (tempDiff > TEMP_HYSTERESIS)
+        {
             changePWM(0);
             isFanOn = false;
         }
     }
 }
 
-void runFan(){
-    if(fanMode == FAN_MODE_AUTO)
+void runFan()
+{
+    if (fanMode == FAN_MODE_AUTO)
     {
         updateFanAutoControlPower();
     }
-}
-
-void changePWM(uint16_t targetValue)
-{
-    ledcWrite(PWM_CHANNEL, targetValue);
 }
