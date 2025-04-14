@@ -10,10 +10,9 @@ void setup()
   Serial.begin(115200);
   delay(1000);
 
-  // Fan must be last
-  initBLE();
   initTempSensor();
   initFan();
+  initBLE();
 }
 
 void loop()

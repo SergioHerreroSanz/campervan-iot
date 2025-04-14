@@ -4,12 +4,12 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
-#define DHTPIN 27
-#define DHTTYPE DHT11
+#define DHT_PIN 27
+#define DHT_TYPE DHT11
 #define TEMP_HISTORY_SIZE 60    // 5 minutes
 #define TEMP_CURRENT_AVG_SIZE 4 // Last 20 seconds
-#define TEMP_POLL_TIMER 5000    // Poll every 5 seconds
-DHT dht(DHTPIN, DHTTYPE);
+#define TEMP_POLL_TIMER 2000    // Poll every 5 seconds
+DHT dht(DHT_PIN, DHT_TYPE);
 
 void initTempSensor()
 {
@@ -33,7 +33,10 @@ void pollTempSensor()
     if (millis() - lastTempTimeMeasurement > TEMP_POLL_TIMER)
     {
         lastTempTimeMeasurement = millis();
-        float t = dht.readTemperature();
+        // float t = dht.readTemperature();
+        float t = temperatureRead();
+        Serial.print("Valor de temperatura leido: ");
+        Serial.println(t);
         if (!isnan(t))
         {
             updateTempHistory(t);

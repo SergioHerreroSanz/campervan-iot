@@ -4,15 +4,18 @@
 #include <bleServerCallbacks.h>
 #include <bleModeCallbacks.h>
 #include <blePowerCallbacks.h>
+#include <bleTargetTempCallbacks.h>
 #include <fan.h>
 
 #define BLE_DEVICE_NAME "ESP32-ventiladores"
 #define BLE_SERVICE_ID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define BLE_POWER_CHARACTERISTIC_ID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define BLE_MODE_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad1"
+#define BLE_TARGET_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad2"
 
 NimBLECharacteristic *pwmCharacteristic;
 NimBLECharacteristic *modeCharacteristic;
+NimBLECharacteristic *targetTempCharacteristic;
 
 void initBLE()
 {
@@ -32,19 +35,16 @@ void initBLE()
         BLE_POWER_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
     pwmCharacteristic->setCallbacks(new BLEPowerCallbacks());
-    uint16_t initialPWM = 1 << (PWM_RESOLUTION - 1);
-    uint8_t pwmInitVal[2] = {
-        (uint8_t)(initialPWM & 0xFF),       // lower byte
-        (uint8_t)((initialPWM >> 8) & 0xFF) // upper byte
-    };
-    pwmCharacteristic->setValue(pwmInitVal, 2);
 
     modeCharacteristic = pService->createCharacteristic(
         BLE_MODE_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
     modeCharacteristic->setCallbacks(new BLEModeCallbacks());
-    uint8_t modeInitVal = 0;
-    modeCharacteristic->setValue(&modeInitVal, 1);
+
+    targetTempCharacteristic = pService->createCharacteristic(
+        BLE_TARGET_TEMP_CHARACTERISTIC_ID,
+        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+    targetTempCharacteristic->setCallbacks(new BLETargetTempCallbacks());
 
     pService->start();
     pAdvertising->start();

@@ -6,6 +6,10 @@
 
 class BLEPowerCallbacks : public NimBLECharacteristicCallbacks
 {
+    virtual void onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
+    {
+        pCharacteristic->setValue(getFanManualPowerTarget());
+    }
     void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) override
     {
         std::string value = pCharacteristic->getValue();
