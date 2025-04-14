@@ -14,16 +14,16 @@ class BLEModeCallbacks : public NimBLECharacteristicCallbacks
             if (modeValue == 0)
             {
                 Serial.println("Modo MANUAL seleccionado desde BLE.");
-                // setFanMode(FAN_MODE_MANUAL);
+                setFanMode(FAN_MODE_MANUAL);
             }
             else if (modeValue == 1)
             {
                 Serial.println("Modo AUTOMÁTICO seleccionado desde BLE.");
-                // setFanMode(FAN_MODE_AUTO);
+                setFanMode(FAN_MODE_AUTO);
             }
             else
             {
-                Serial.println("⚠️ Valor inválido para el modo.");
+                Serial.println("Error: Valor inválido para el modo.");
             }
         }
     }

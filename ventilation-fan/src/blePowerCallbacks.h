@@ -10,7 +10,7 @@ class BLEPowerCallbacks : public NimBLECharacteristicCallbacks
     {
         std::string value = pCharacteristic->getValue();
 
-        if (value.length() >= (PWM_RESOLUTION / 8)) // Comprobar que tenemos los bytes necesarios
+        if (value.length() >= (PWM_RESOLUTION / 8))
         {
             uint16_t pwmValue = (uint8_t)value[0] | ((value.size() > 1 ? (uint8_t)value[1] : 0) << 8);
 
@@ -18,16 +18,16 @@ class BLEPowerCallbacks : public NimBLECharacteristicCallbacks
             {
                 Serial.print("Valor PWM recibido: ");
                 Serial.println(pwmValue);
-                gradualPWMChange(pwmValue);
+                setFanManualPowerTarget(pwmValue);
             }
             else
             {
-                Serial.println("Error: Valor fuera de rango");
+                Serial.println("Error: Valor PWM fuera de rango");
             }
         }
         else
         {
-            Serial.println("Error: No se recibió valor válido.");
+            Serial.println("Error: No se recibió valor PWM válido.");
         }
     }
 };
