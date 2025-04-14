@@ -21,7 +21,7 @@ enum FanMode
 };
 
 FanMode fanMode = FAN_MODE_MANUAL;
-uint16_t fanManualPowerTarget = pow(2, PWM_RESOLUTION - 1);
+uint16_t fanManualPowerTarget = pow(2, PWM_RESOLUTION) - 1;
 float userTempTarget = 25;
 bool isFanOn = true;
 
@@ -50,7 +50,6 @@ FanMode getFanMode()
 void setFanManualPowerTarget(uint16_t power)
 {
     fanManualPowerTarget = power;
-    changePWM(power);
 }
 uint16_t getFanManualPowerTarget()
 {
@@ -115,7 +114,15 @@ void updateFanAutoControlPower()
 
 void runFan()
 {
-    if (fanMode == FAN_MODE_AUTO)
+    if (fanMode == FAN_MODE_OFF)
+    {
+        changePWM(0);
+    }
+    else if (fanMode == FAN_MODE_MANUAL)
+    {
+        changePWM(fanManualPowerTarget);
+    }
+    else if (fanMode == FAN_MODE_AUTO)
     {
         updateFanAutoControlPower();
     }

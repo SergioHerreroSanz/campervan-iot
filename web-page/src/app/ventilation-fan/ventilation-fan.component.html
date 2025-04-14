@@ -1,40 +1,42 @@
 <div style="padding: 2rem">
   <button (click)="connectToDevice()">Conectar con BLE</button>
 
-  <div style="margin-top: 2rem">
-    <label for="mode-select">Modo de ventilador:</label>
-    <select
-      id="mode-select"
-      [(ngModel)]="modeValue"
-      (change)="onModeChange($event)"
-    >
-      <option [value]="0">Apagado</option>
-      <option [value]="1">Manual</option>
-      <option [value]="2">Automático</option>
-    </select>
-  </div>
+  <ng-container *ngIf="device">
+    <div style="margin-top: 2rem">
+      <label for="mode-select">Modo de ventilador:</label>
+      <select
+        id="mode-select"
+        [(ngModel)]="modeValue"
+        (change)="onModeChange($event)"
+      >
+        <option [value]="0">Apagado</option>
+        <option [value]="1">Manual</option>
+        <option [value]="2">Automático</option>
+      </select>
+    </div>
 
-  <div *ngIf="modeValue == 1" style="margin-top: 2rem">
-    <label for="pwm-slider">PWM:</label>
-    <input
-      id="pwm-slider"
-      type="range"
-      min="0"
-      max="256"
-      [value]="powerValue"
-      (input)="onSliderChange($event)"
-    />
-    <span>{{ powerValue }}</span>
-  </div>
-  <div *ngIf="modeValue == 2" style="margin-top: 2rem">
-    <label for="temp-target-input">Target temp:</label>
-    <input
-      id="temp-target-input"
-      type="number"
-      min="0"
-      max="40"
-      [value]="targetTempValue"
-      (input)="onTargetTempChange($event)"
-    />
-  </div>
+    <div *ngIf="modeValue == 1" style="margin-top: 2rem">
+      <label for="pwm-slider">PWM:</label>
+      <input
+        id="pwm-slider"
+        type="range"
+        min="0"
+        max="255"
+        [value]="powerValue"
+        (input)="onSliderChange($event)"
+      />
+      <span>{{ powerValue }}</span>
+    </div>
+    <div *ngIf="modeValue == 2" style="margin-top: 2rem">
+      <label for="temp-target-input">Target temp:</label>
+      <input
+        id="temp-target-input"
+        type="number"
+        min="0"
+        max="40"
+        [value]="targetTempValue"
+        (input)="onTargetTempChange($event)"
+      />
+    </div>
+  </ng-container>
 </div>
