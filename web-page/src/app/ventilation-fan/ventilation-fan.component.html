@@ -1,12 +1,14 @@
 <div style="padding: 2rem">
-  <button (click)="connectToDevice()">Conectar con BLE</button>
+  <ng-template #connectBtn>
+    <button (click)="connectToDevice()">Conectar con BLE</button>
+  </ng-template>
 
-  <ng-container *ngIf="device">
+  <ng-container *ngIf="connected$ | async; else connectBtn">
     <div style="margin-top: 2rem">
       <label for="mode-select">Modo de ventilador:</label>
       <select
         id="mode-select"
-        [(ngModel)]="modeValue"
+        [value]="mode$ | async"
         (change)="onModeChange($event)"
       >
         <option [value]="0">Apagado</option>
@@ -15,26 +17,26 @@
       </select>
     </div>
 
-    <div *ngIf="modeValue == 1" style="margin-top: 2rem">
+    <div *ngIf="(mode$ | async) == 1" style="margin-top: 2rem">
       <label for="pwm-slider">PWM:</label>
       <input
         id="pwm-slider"
         type="range"
         min="0"
         max="255"
-        [value]="powerValue"
+        [value]="power$ | async"
         (input)="onSliderChange($event)"
       />
-      <span>{{ powerValue }}</span>
+      <span>{{ power$ | async }}</span>
     </div>
-    <div *ngIf="modeValue == 2" style="margin-top: 2rem">
+    <div *ngIf="(mode$ | async) == 2" style="margin-top: 2rem">
       <label for="temp-target-input">Target temp:</label>
       <input
         id="temp-target-input"
         type="number"
         min="0"
         max="40"
-        [value]="targetTempValue"
+        [value]="targetTemp$ | async"
         (input)="onTargetTempChange($event)"
       />
     </div>

@@ -16,6 +16,8 @@
 #define BLE_TARGET_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad2"
 #define BLE_INT_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad3"
 #define BLE_EXT_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad4"
+#define BLE_RAW_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad5"
+#define BLE_NOTIFY_FREQUENCY 1000
 
 NimBLECharacteristic *pwmCharacteristic;
 NimBLECharacteristic *modeCharacteristic;
@@ -71,9 +73,9 @@ void initBLE()
     extTempCharacteristic->setCallbacks(new BLEExtTempCallbacks());
     extTempCharacteristic->addDescriptor(new BLE2902());
     extTempCharacteristic->setNotifyProperty(true);
-    
+
     rawTempCharacteristic = pService->createCharacteristic(
-        BLE_EXT_TEMP_CHARACTERISTIC_ID,
+        BLE_RAW_TEMP_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
     rawTempCharacteristic->setCallbacks(new BLERawTempCallbacks());
     rawTempCharacteristic->addDescriptor(new BLE2902());
@@ -84,9 +86,14 @@ void initBLE()
     Serial.println("Esperando conexión...");
 }
 
+uint32_t lastNotifyMeasurement = 0;
 void notifyTemps()
 {
-    intTempCharacteristic->nofify();
-    extTempCharacteristic->nofify();
-    rawTempCharacteristic->nofify();
+    if (millis() - lastNotifyMeasurement > BLE_NOTIFY_FREQUENCY)
+    {
+        uint32_t lastNotifyMeasurement = millis();
+        intTempCharacteristic->nofify();
+        extTempCharacteristic->nofify();
+        rawTempCharacteristic->nofify();
+    }
 }
