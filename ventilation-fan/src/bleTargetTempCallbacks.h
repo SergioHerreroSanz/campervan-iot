@@ -4,7 +4,8 @@
 #include <fan.h>
 
 class BLETargetTempCallbacks : public NimBLECharacteristicCallbacks
-{ virtual void onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
+{
+    virtual void onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
     {
         pCharacteristic->setValue(getUserTempTarget());
     }
@@ -19,6 +20,7 @@ class BLETargetTempCallbacks : public NimBLECharacteristicCallbacks
             Serial.print("Valor temperatura recibido: ");
             Serial.println(targetTempValue);
             setUserTempTarget(targetTempValue);
+            pCharacteristic->notify();
         }
         else
         {

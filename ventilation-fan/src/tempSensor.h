@@ -75,7 +75,7 @@ float getTemp()
     return sum / validCount;
 }
 
-float getLastTempValue()
+float getRawTemp()
 {
     return tempHistory[TEMP_HISTORY_SIZE - 1];
 }

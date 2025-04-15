@@ -30,10 +30,7 @@ class BLEModeCallbacks : public NimBLECharacteristicCallbacks
                 Serial.println("Modo AUTOMÁTICO seleccionado desde BLE.");
                 setFanMode(FAN_MODE_AUTO);
             }
-            else
-            {
-                Serial.println("Error: Valor inválido para el modo.");
-            }
+            pCharacteristic->notify();
         }
     }
 };

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <NimBLEDevice.h>
-#include <Arduino.h>
 #include <fan.h>
 
 class BLEPowerCallbacks : public NimBLECharacteristicCallbacks
@@ -23,6 +22,7 @@ class BLEPowerCallbacks : public NimBLECharacteristicCallbacks
                 Serial.print("Valor PWM recibido: ");
                 Serial.println(pwmValue);
                 setFanManualPowerTarget(pwmValue);
+                pCharacteristic->notify();
             }
             else
             {
