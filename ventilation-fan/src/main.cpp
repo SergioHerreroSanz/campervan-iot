@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <NimBLEDevice.h>
-
 #include <ble.h>
 #include <fan.h>
 #include <tempSensor.h>
