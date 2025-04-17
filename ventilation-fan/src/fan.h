@@ -12,7 +12,6 @@ constexpr int PWM_RESOLUTION = 8;
 #define UPDATE_FREQUENCY 2000 // Every s
 #define TEMP_HYSTERESIS 1.0f  // In celsius
 #define MIN_FAN_POWER 0.2f    // Percentage
-#define FAN_CURVE 0.45f
 
 #define DEFAULT_FAN_MODE = FAN_MODE_MANUAL;
 #define DEFAULT_FAN_MANUAL_POWER_TARGET = 255;
@@ -103,7 +102,8 @@ void updateFanAutoControlPower()
         // Temperatura interior superior a la deseada
         if (isFanOn ? intTemp > targetTemp : intTemp > targetTemp + TEMP_HYSTERESIS)
         {
-            float curve = 0.1 + (1 - 0.1) / (1 + exp(-1.8 * (tempDiff - 2)));
+            float curve = ((1) / (1 + exp(-3 * (tempDiff - 1))));
+            // float curve = 0.1 + (1 - 0.1) / (1 + exp(-1.8 * (tempDiff - 2)));
             Serial.print(" °C | Curva: ");
             Serial.print(curve);
             newPower = (pow(2, PWM_RESOLUTION) - 1) * curve;
