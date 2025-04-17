@@ -1,6 +1,6 @@
-import { BehaviorSubject, from, map, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, delay, from, map, of, switchMap, tap } from 'rxjs';
 
-export function initCharacteristic<T>(
+export async function initCharacteristic<T>(
   service: BluetoothRemoteGATTService,
   uuid: string,
   listener: (
@@ -12,21 +12,14 @@ export function initCharacteristic<T>(
   subCallback: (bs: BehaviorSubject<T>) => void,
 ) {
   const subj = new BehaviorSubject<T>(null as any);
-
-  return from(service.getCharacteristic(uuid)).pipe(
-    switchMap((char) =>
-      from(char.readValue()).pipe(
-        map((value) => {
-          const parsed = parser(value);
-          subj.next(parsed);
-          charCallback(char);
-          subCallback(subj);
-          return char;
-        }),
-        tap((char) => listener(char, subj)),
-      ),
-    ),
-  );
+  const char = await service.getCharacteristic(uuid);
+  const value = await char.readValue()
+  const parsed = parser(value);
+  subj.next(parsed);
+  charCallback(char);
+  subCallback(subj);
+  listener(char, subj)
+  await new Promise(r => setTimeout(r, 100));
 }
 
 export function listenUint8(
@@ -40,14 +33,14 @@ export function listenUint16(
   char: BluetoothRemoteGATTCharacteristic,
   subj: BehaviorSubject<number>,
 ): void {
-  listen(char, subj, (v) => v.getUint16(0), 2);
+  listen(char, subj, (v) => v.getUint16(0, true), 2);
 }
 
 export function listenFloat32(
   char: BluetoothRemoteGATTCharacteristic,
   subj: BehaviorSubject<number>,
 ): void {
-  listen(char, subj, (v) => v.getFloat32(0), 4);
+  listen(char, subj, (v) => v.getFloat32(0, true), 4);
 }
 
 export function listen(

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {
   BehaviorSubject,
   catchError,
+  combineLatest,
   forkJoin,
   from,
   map,
@@ -43,38 +44,42 @@ export class VentilationFanService {
   extTemp$: BehaviorSubject<number> = new BehaviorSubject(0);
   rawTemp$: BehaviorSubject<number> = new BehaviorSubject(0);
 
-  connect(): Observable<boolean> {
-    return from(
-      navigator.bluetooth.requestDevice({
+  async connect(): Promise<Observable<boolean>> {
+    try {
+      const device = await navigator.bluetooth.requestDevice({
         filters: [{ namePrefix: BLE_NAME_PREFIX }],
         optionalServices: [BLE_SERVICE_UID],
-      }),
-    ).pipe(
-      tap((device) => (this.device = device)),
-      switchMap(() => from(this.device!.gatt!.connect())),
-      switchMap((server) => from(server.getPrimaryService(BLE_SERVICE_UID))),
-      switchMap((s) =>
-        forkJoin([
-          initCharacteristic(s, BLE_MODE_UID, listenUint8, (dv) => dv.getUint8(0), (c) => (this.modeC = c), (bs) => (this.mode$ = bs)),
-          initCharacteristic(s, BLE_POWER_UID, listenUint16, (dv) => dv.getUint16(0, true), (c) => (this.powerC = c), (bs) => (this.power$ = bs)),
-          initCharacteristic(s, BLE_TARGET_TEMP_UID, listenFloat32, (dv) => dv.getFloat32(0, true), (c) => (this.targetTempC = c), (bs) => (this.targetTemp$ = bs)),
-          initCharacteristic(s, BLE_INT_TEMP_UID, listenFloat32, (dv) => dv.getFloat32(0, true), (c) => (this.intTempC = c), (bs) => (this.intTemp$ = bs)),
-          initCharacteristic(s, BLE_EXT_TEMP_UID, listenFloat32, (dv) => dv.getFloat32(0, true), (c) => (this.extTempC = c), (bs) => (this.extTemp$ = bs)),
-          initCharacteristic(s, BLE_RAW_TEMP_UID, listenFloat32, (dv) => dv.getFloat32(0, true), (c) => (this.rawTempC = c), (bs) => (this.rawTemp$ = bs))
-        ]),
-      ),
-      tap(() => {
+      })
+      this.device = device;
+      const server = await this.device.gatt?.connect();
+      if (server) {
+        const s = await server.getPrimaryService(BLE_SERVICE_UID)
+        await initCharacteristic(s, BLE_MODE_UID, listenUint8, (dv) => dv.getUint8(0), (c) => (this.modeC = c), (bs) => (this.mode$ = bs));
+        await initCharacteristic(s, BLE_POWER_UID, listenUint16, (dv) => dv.getUint16(0, true), (c) => (this.powerC = c), (bs) => (this.power$ = bs));
+        await initCharacteristic(s, BLE_TARGET_TEMP_UID, listenFloat32, (dv) => dv.getFloat32(0, true), (c) => (this.targetTempC = c), (bs) => (this.targetTemp$ = bs));
+        await initCharacteristic(s, BLE_INT_TEMP_UID, listenFloat32, (dv) => dv.getFloat32(0, true), (c) => (this.intTempC = c), (bs) => (this.intTemp$ = bs));
+        await initCharacteristic(s, BLE_EXT_TEMP_UID, listenFloat32, (dv) => dv.getFloat32(0, true), (c) => (this.extTempC = c), (bs) => (this.extTemp$ = bs));
+        await initCharacteristic(s, BLE_RAW_TEMP_UID, listenFloat32, (dv) => dv.getFloat32(0, true), (c) => (this.rawTempC = c), (bs) => (this.rawTemp$ = bs));
+        
         console.log('✅ Conectado y características listas');
         console.log('Modo recibido:', this.mode$.value);
         console.log('PWM recibido:', this.power$.value);
         console.log('Temp objetivo recibida:', this.targetTemp$.value);
-      }),
-      map(() => true),
-      catchError((error) => {
-        console.error('❌ Error en la conexión BLE:', error);
-        return of(false);
-      }),
-    );
+        console.log('Temp exterior recibida:', this.extTemp$.value);
+        console.log('Temp interior recibida:', this.intTemp$.value);
+        console.log('Temp instanta recibida:', this.rawTemp$.value);
+
+        const connected$ = new BehaviorSubject(!!this.device?.gatt?.connected)
+        device?.addEventListener('gattserverdisconnected', (e) => {
+          connected$.next(!!(e.target as BluetoothDevice).gatt?.connected)
+        })
+        return connected$.asObservable()
+      }
+    } catch (error) {
+      console.error('❌ Error en la conexión BLE:', error);
+    }
+
+    return of(false);
   }
 
   sendMode(mode: number): void {

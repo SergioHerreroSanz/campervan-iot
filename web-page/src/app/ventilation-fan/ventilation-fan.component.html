@@ -1,19 +1,22 @@
 <div style="padding: 2rem">
+  <p>ExtTemp: {{ extTemp$ | async | number : "1.2-2" }}</p>
+  <p>IntTemp: {{ intTemp$ | async | number : "1.2-2" }}</p>
+  <p>RawTemp: {{ rawTemp$ | async | number : "1.2-2" }}</p>
   <ng-template #connectBtn>
     <button (click)="connectToDevice()">Conectar con BLE</button>
   </ng-template>
 
   <ng-container *ngIf="connected$ | async; else connectBtn">
-    <div style="margin-top: 2rem">
+    <div *ngIf="{ value: mode$ | async } as mode" style="margin-top: 2rem">
       <label for="mode-select">Modo de ventilador:</label>
       <select
         id="mode-select"
-        [value]="mode$ | async"
+        [ngModel]="mode.value"
         (change)="onModeChange($event)"
       >
-        <option [value]="0">Apagado</option>
-        <option [value]="1">Manual</option>
-        <option [value]="2">Automático</option>
+        <option [ngValue]="0">Apagado</option>
+        <option [ngValue]="1">Manual</option>
+        <option [ngValue]="2">Automático</option>
       </select>
     </div>
 

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { from, Observable, of, tap } from 'rxjs';
 import { VentilationFanService } from './ventilation-fan.service';
 
 export enum FanMode {
@@ -19,24 +19,26 @@ export enum FanMode {
 })
 export class VentilationFanComponent {
   connected$?: Observable<boolean>;
-  mode$: Observable<number>;
-  power$: Observable<number>;
-  targetTemp$: Observable<number>;
-  intTemp$: Observable<number>;
-  extTemp$: Observable<number>;
-  rawTemp$: Observable<number>;
+  mode$?: Observable<number>;
+  power$?: Observable<number>;
+  targetTemp$?: Observable<number>;
+  intTemp$?: Observable<number>;
+  extTemp$?: Observable<number>;
+  rawTemp$?: Observable<number>;
 
-  constructor(private readonly vfs: VentilationFanService) {
-    this.mode$ = this.vfs.mode$.asObservable();
-    this.power$ = this.vfs.power$.asObservable();
-    this.targetTemp$ = this.vfs.targetTemp$.asObservable();
-    this.intTemp$ = this.vfs.intTemp$.asObservable();
-    this.extTemp$ = this.vfs.extTemp$.asObservable();
-    this.rawTemp$ = this.vfs.rawTemp$.asObservable();
-  }
+  constructor(private readonly vfs: VentilationFanService) { }
 
   connectToDevice() {
-    this.connected$ = this.vfs.connect();
+    this.vfs.connect().then((connected) => {
+      this.connected$ = connected;
+      this.mode$ = this.vfs.mode$.asObservable();
+      this.power$ = this.vfs.power$.asObservable();
+      this.targetTemp$ = this.vfs.targetTemp$.asObservable();
+      this.intTemp$ = this.vfs.intTemp$.asObservable();
+      this.extTemp$ = this.vfs.extTemp$.asObservable();
+      this.rawTemp$ = this.vfs.rawTemp$.asObservable().pipe(tap(console.log));
+    })
+
   }
 
   onSliderChange(event: Event) {
