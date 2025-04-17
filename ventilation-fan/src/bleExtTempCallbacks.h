@@ -7,6 +7,7 @@ class BLEExtTempCallbacks : public NimBLECharacteristicCallbacks
 {
     virtual void onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
     {
-        pCharacteristic->setValue(getTemp());
+        float extTemp = getAverageTemp();
+        pCharacteristic->setValue((uint8_t *)&extTemp, sizeof(extTemp));
     }
 };

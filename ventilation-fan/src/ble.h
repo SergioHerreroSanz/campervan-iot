@@ -7,6 +7,7 @@
 #include <bleTargetTempCallbacks.h>
 #include <bleIntTempCallbacks.h>
 #include <bleExtTempCallbacks.h>
+#include <bleRawTempCallbacks.h>
 #include <fan.h>
 
 #define BLE_DEVICE_NAME "ESP32-ventiladores"
@@ -43,43 +44,31 @@ void initBLE()
         BLE_POWER_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     pwmCharacteristic->setCallbacks(new BLEPowerCallbacks());
-    pwmCharacteristic->addDescriptor(new BLE2902());
-    pwmCharacteristic->setNotifyProperty(true);
 
     modeCharacteristic = pService->createCharacteristic(
         BLE_MODE_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     modeCharacteristic->setCallbacks(new BLEModeCallbacks());
-    modeCharacteristic->addDescriptor(new BLE2902());
-    modeCharacteristic->setNotifyProperty(true);
 
     targetTempCharacteristic = pService->createCharacteristic(
         BLE_TARGET_TEMP_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     targetTempCharacteristic->setCallbacks(new BLETargetTempCallbacks());
-    targetTempCharacteristic->addDescriptor(new BLE2902());
-    targetTempCharacteristic->setNotifyProperty(true);
 
     intTempCharacteristic = pService->createCharacteristic(
         BLE_INT_TEMP_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
     intTempCharacteristic->setCallbacks(new BLEIntTempCallbacks());
-    intTempCharacteristic->addDescriptor(new BLE2902());
-    intTempCharacteristic->setNotifyProperty(true);
 
     extTempCharacteristic = pService->createCharacteristic(
         BLE_EXT_TEMP_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
     extTempCharacteristic->setCallbacks(new BLEExtTempCallbacks());
-    extTempCharacteristic->addDescriptor(new BLE2902());
-    extTempCharacteristic->setNotifyProperty(true);
 
     rawTempCharacteristic = pService->createCharacteristic(
         BLE_RAW_TEMP_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
     rawTempCharacteristic->setCallbacks(new BLERawTempCallbacks());
-    rawTempCharacteristic->addDescriptor(new BLE2902());
-    rawTempCharacteristic->setNotifyProperty(true);
 
     pService->start();
     pAdvertising->start();
@@ -91,9 +80,18 @@ void notifyTemps()
 {
     if (millis() - lastNotifyMeasurement > BLE_NOTIFY_FREQUENCY)
     {
-        uint32_t lastNotifyMeasurement = millis();
-        intTempCharacteristic->nofify();
-        extTempCharacteristic->nofify();
-        rawTempCharacteristic->nofify();
+        lastNotifyMeasurement = millis();
+
+        float intTemp = getRawTemp();
+        intTempCharacteristic->setValue((uint8_t *)&intTemp, sizeof(intTemp));
+        intTempCharacteristic->notify();
+
+        float extTemp = getRawTemp();
+        extTempCharacteristic->setValue((uint8_t *)&extTemp, sizeof(extTemp));
+        extTempCharacteristic->notify();
+
+        float rawTemp = getRawTemp();
+        rawTempCharacteristic->setValue((uint8_t *)&rawTemp, sizeof(rawTemp));
+        rawTempCharacteristic->notify();
     }
 }

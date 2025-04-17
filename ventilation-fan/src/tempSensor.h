@@ -44,7 +44,7 @@ void pollTempSensor()
     }
 }
 
-float getTempAverage()
+float getAverageTemp()
 {
     float sum = 0;
     uint8_t validCount = 0;

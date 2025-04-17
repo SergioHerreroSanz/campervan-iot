@@ -2,12 +2,12 @@
 
 #include <Arduino.h>
 #include <tempSensor.h>
-#include <persistency.h>
+#include <fanPersistency.h>
 
 // Definir la configuración del ventilador (usando PWM)
-#define PWM_PIN 12
+#define PWM_PIN 14
 #define PWM_CHANNEL 0
-#define PWM_FREQUENCY 1000
+#define PWM_FREQUENCY 25000
 constexpr int PWM_RESOLUTION = 8;
 #define UPDATE_FREQUENCY 2000 // Every s
 #define TEMP_HYSTERESIS 1.0f  // In celsius
@@ -25,10 +25,9 @@ enum FanMode
     FAN_MODE_AUTO = 2
 };
 
-FanMode fanMode = loadFanMode();
+FanMode fanMode = FAN_MODE_MANUAL;
 uint16_t fanManualPowerTarget = pow(2, PWM_RESOLUTION) - 1;
-float userTempTarget = 25;
-bool isFanOn = true;
+float userTempTarget = 25.0f;
 
 void changePWM(uint16_t targetValue)
 {
@@ -40,13 +39,18 @@ void initFan()
     pinMode(PWM_PIN, OUTPUT);
     ledcSetup(PWM_CHANNEL, PWM_FREQUENCY, PWM_RESOLUTION);
     ledcAttachPin(PWM_PIN, PWM_CHANNEL);
+
+    fanMode = (FanMode)loadFanMode(fanMode);
+    fanManualPowerTarget = loadFanManualPowerTarget(fanManualPowerTarget);
+    userTempTarget = loadUserTempTarget(userTempTarget);
+
     changePWM(fanManualPowerTarget);
 }
 
 void setFanMode(FanMode mode)
 {
     fanMode = mode;
-    saveFanMode(mode.toInt());
+    saveFanMode(mode);
 }
 FanMode getFanMode()
 {
@@ -73,6 +77,7 @@ float getUserTempTarget()
     return userTempTarget;
 }
 
+bool isFanOn = true;
 uint32_t lastFanTimeMeasurement = 0;
 void updateFanAutoControlPower()
 {
@@ -80,7 +85,7 @@ void updateFanAutoControlPower()
     {
         lastFanTimeMeasurement = millis();
 
-        float extTemp = getTempAverage();
+        float extTemp = getAverageTemp();
         float intTemp = getTemp();
         float targetTemp = max(userTempTarget, extTemp);
 
