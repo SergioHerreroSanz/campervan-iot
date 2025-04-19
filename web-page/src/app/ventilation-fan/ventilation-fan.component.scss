@@ -1,4 +1,93 @@
-input[type="range"] {
-  width: 100%;
-  max-width: 400px;
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem;
+  z-index: 1;
+
+  >div {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .title {
+    padding-top: 3rem;
+    width: max-content;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 1.5rem;
+  }
+}
+
+.body {
+
+  .mode-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: -webkit-fill-available;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+
+    .mode {
+      margin: .5rem 1rem;
+      border: solid 2px;
+      border-radius: 1rem;
+      border-color: lightgray;
+
+      &.active {
+        .mode-label {
+          background-color: lightgray;
+          border-radius: calc(0.75rem - 2px);
+        }
+
+        &:has(.mode-content) .mode-label {
+          border-radius: calc(0.75rem - 2px) calc(0.75rem - 2px) 0 0;
+        }
+        
+        .mode-content {}
+      }
+
+      &-label,
+      &-content {
+        padding: 1rem;
+        position: relative;
+      }
+    }
+
+    #manual {
+      .mode-slider {
+        width: calc(100% - 3.3rem);
+      }
+
+      span {
+        padding-left: 1rem;
+        width: 2rem;
+        float: right;
+        text-align: center;
+      }
+    }
+
+    #auto {
+      .mode-toggle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0.5rem;
+        display: flex;
+        align-items: center;
+      }
+
+      i {
+        width: 26px;
+        height: 26px;
+        padding: 0 0.5rem;
+      }
+    }
+  }
 }

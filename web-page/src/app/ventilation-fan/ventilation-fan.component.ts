@@ -1,13 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { from, Observable, of, tap } from 'rxjs';
+import { from, map, Observable, of, pipe, take, tap } from 'rxjs';
 import { VentilationFanService } from './ventilation-fan.service';
 
 export enum FanMode {
   FAN_MODE_OFF = 0,
   FAN_MODE_MANUAL = 1,
-  FAN_MODE_AUTO = 2,
+  FAN_MODE_TURBO = 2,
+  FAN_MODE_AUTO_LOW = 3,
+  FAN_MODE_AUTO_HIGH = 4,
+  FAN_MODE_SILENT = 5
 }
 
 @Component({
@@ -18,12 +21,15 @@ export enum FanMode {
   providers: [VentilationFanService],
 })
 export class VentilationFanComponent {
+  availableModes = FanMode;
+  resolution = 100;
+  autoMode = false;
+
   connected$?: Observable<boolean>;
   mode$?: Observable<number>;
-  power$?: Observable<number>;
+  userPower$?: Observable<number>;
   targetTemp$?: Observable<number>;
-  intTemp$?: Observable<number>;
-  extTemp$?: Observable<number>;
+  currPower$?: Observable<number>;
   rawTemp$?: Observable<number>;
 
   constructor(private readonly vfs: VentilationFanService) { }
@@ -31,27 +37,46 @@ export class VentilationFanComponent {
   connectToDevice() {
     this.vfs.connect().then((connected) => {
       this.connected$ = connected;
-      this.mode$ = this.vfs.mode$.asObservable();
-      this.power$ = this.vfs.power$.asObservable();
+      this.mode$ = this.vfs.mode$.asObservable().pipe(tap(val => {
+        if (val == FanMode.FAN_MODE_AUTO_LOW || val == FanMode.FAN_MODE_AUTO_HIGH) {
+          this.autoMode = val == FanMode.FAN_MODE_AUTO_HIGH
+        }
+      }));
+      this.userPower$ = this.vfs.userPower$.asObservable().pipe(map(val => Math.round(val * this.resolution)));
       this.targetTemp$ = this.vfs.targetTemp$.asObservable();
-      this.intTemp$ = this.vfs.intTemp$.asObservable();
-      this.extTemp$ = this.vfs.extTemp$.asObservable();
-      this.rawTemp$ = this.vfs.rawTemp$.asObservable().pipe(tap(console.log));
+      this.currPower$ = this.vfs.currPower$.asObservable().pipe(map(val => Math.round(val * this.resolution)));
+      this.rawTemp$ = this.vfs.rawTemp$.asObservable().pipe();
     })
 
   }
 
-  onSliderChange(event: Event) {
+  changeMode(mode: FanMode) {
+    this.vfs.sendMode(mode);
+  }
+
+  changeModeAuto(event: Event) {
+    const target = event.target as HTMLElement;
+    let high;
+
+    if (event.type == "click" && target.closest('.mode-toggle')) {
+      return;
+    } else if (event.type == "change") {
+      high = (event?.target as HTMLInputElement)?.value == 'on'
+      this.changeMode(this.autoMode ? FanMode.FAN_MODE_AUTO_HIGH : FanMode.FAN_MODE_AUTO_LOW);
+
+    } else {
+      this.changeMode(this.autoMode ? FanMode.FAN_MODE_AUTO_HIGH : FanMode.FAN_MODE_AUTO_LOW)
+    }
+
+    event.preventDefault();
+  }
+
+  changePower(event: Event) {
     const target = event.target as HTMLInputElement;
-    this.vfs.sendPower(parseInt(target.value, 10));
+    this.vfs.sendPower(parseInt(target.value, 10) / this.resolution);
   }
 
-  onModeChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    this.vfs.sendMode(parseInt(target.value, 10));
-  }
-
-  onTargetTempChange(event: Event) {
+  chargeTargeTemp(event: Event) {
     const target = event.target as HTMLSelectElement;
     this.vfs.sendTargetTemp(parseFloat(target.value));
   }

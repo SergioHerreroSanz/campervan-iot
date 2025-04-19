@@ -1,47 +1,65 @@
-<div style="padding: 2rem">
-  <p>ExtTemp: {{ extTemp$ | async | number : "1.2-2" }}</p>
-  <p>IntTemp: {{ intTemp$ | async | number : "1.2-2" }}</p>
-  <p>RawTemp: {{ rawTemp$ | async | number : "1.2-2" }}</p>
-  <ng-template #connectBtn>
-    <button (click)="connectToDevice()">Conectar con BLE</button>
-  </ng-template>
+<div class="header">
+  <div>
+    <div class="connection">
+      <i [class]="(connected$|async) ? 'device-connected' : 'device-disconected'"></i>
+      <button *ngIf="!(connected$ | async) else connected" (click)="connectToDevice()">Conectar con BLE</button>
 
-  <ng-container *ngIf="connected$ | async; else connectBtn">
-    <div *ngIf="{ value: mode$ | async } as mode" style="margin-top: 2rem">
-      <label for="mode-select">Modo de ventilador:</label>
-      <select
-        id="mode-select"
-        [ngModel]="mode.value"
-        (change)="onModeChange($event)"
-      >
-        <option [ngValue]="0">Apagado</option>
-        <option [ngValue]="1">Manual</option>
-        <option [ngValue]="2">Automático</option>
-      </select>
+      <ng-template #connected>
+        Conectado
+      </ng-template>
+    </div>
+    <div class="data">
+      <div *ngIf=" rawTemp$ | async as temp">{{ temp | number : "1.2-2" }}ºC</div>
+      <div *ngIf=" currPower$ | async as power">{{ power }}%</div>
+    </div>
+  </div>
+  <div class="title">
+    Control de ventiladores
+  </div>
+</div>
+
+<div class="body" *ngIf="connected$ | async ">
+  <div class="mode-wrapper">
+    <div id="manual" class="mode" [class.active]="(mode$ | async) == availableModes.FAN_MODE_MANUAL">
+      <div class="mode-label" (click)="changeMode(availableModes.FAN_MODE_MANUAL)">Modo Manual</div>
+      <div class="mode-content" *ngIf="(mode$|async) == availableModes.FAN_MODE_MANUAL">
+        <input class="mode-slider" type="range" min="0" max="100" [value]="userPower$ | async"
+          (input)="changePower($event)" />
+        <span>{{ (userPower$ | async ) }}%</span>
+      </div>
     </div>
 
-    <div *ngIf="(mode$ | async) == 1" style="margin-top: 2rem">
-      <label for="pwm-slider">PWM:</label>
-      <input
-        id="pwm-slider"
-        type="range"
-        min="0"
-        max="255"
-        [value]="power$ | async"
-        (input)="onSliderChange($event)"
-      />
-      <span>{{ power$ | async }}</span>
+    <div id="turbo" class="mode" [class.active]="(mode$ | async) == availableModes.FAN_MODE_TURBO">
+      <div class="mode-label" (click)="changeMode(availableModes.FAN_MODE_TURBO)"> Modo Turbo </div>
     </div>
-    <div *ngIf="(mode$ | async) == 2" style="margin-top: 2rem">
-      <label for="temp-target-input">Target temp:</label>
-      <input
-        id="temp-target-input"
-        type="number"
-        min="0"
-        max="40"
-        [value]="targetTemp$ | async"
-        (input)="onTargetTempChange($event)"
-      />
+
+    <div id="auto" class="mode"
+      [class.active]="(mode$ | async) == availableModes.FAN_MODE_AUTO_LOW || (mode$ | async) == availableModes.FAN_MODE_AUTO_HIGH">
+      <div class="mode-label" (click)="changeModeAuto($event)">
+        Auto
+        <div class="mode-toggle">
+          <i class="sun-small">-</i>
+          <label class="input-toggle">
+            <input type="checkbox" [(ngModel)]="autoMode" (click)="$event.stopPropagation()"
+              (change)="changeModeAuto($event)">
+            <span class="toggle round"></span>
+          </label>
+          <i class="sun-big">+</i>
+        </div>
+      </div>
     </div>
-  </ng-container>
+
+    <div id="silent" class="mode" [class.active]="(mode$ | async) == availableModes.FAN_MODE_SILENT">
+      <div class="mode-label" (click)="changeMode(availableModes.FAN_MODE_SILENT)">
+        Modo noche
+      </div>
+      <div class="mode-content" *ngIf="(mode$ | async) == availableModes.FAN_MODE_SILENT">
+        <div>
+          <label for="temp-target-input">Target temp:</label>
+          <input id="temp-target-input" type="number" min="0" max="40" step="0.1" [value]="targetTemp$ | async"
+            (input)="chargeTargeTemp($event)" />
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
