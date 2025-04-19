@@ -1,10 +1,12 @@
 #pragma once
 
 #include <Arduino.h>
-#include <tempSensor.h>
-#include <fanPersistency.h>
+#include <persistency.h>
+#include <fanModeSilent.h>
+#include <fanModeAuto.h>
+#include <powerHistory.h>
+#include <tempHistory.h>
 
-// Definir la configuración del ventilador (usando PWM)
 #define PWM_PIN 14
 #define PWM_CHANNEL 0
 #define PWM_FREQUENCY 25000
@@ -15,22 +17,28 @@ constexpr int PWM_RESOLUTION = 8;
 
 #define DEFAULT_FAN_MODE = FAN_MODE_MANUAL;
 #define DEFAULT_FAN_MANUAL_POWER_TARGET = 255;
+#define DEFAULT_FAN_TURBO_POWER = 1.0f;
 #define DEFAULT_USER_TEMP_TARGET = 25;
 
 enum FanMode
 {
     FAN_MODE_OFF = 0,
     FAN_MODE_MANUAL = 1,
-    FAN_MODE_AUTO = 2
+    FAN_MODE_TURBO = 2,
+    FAN_MODE_AUTO_LOW = 3,
+    FAN_MODE_AUTO_HIGH = 4,
+    FAN_MODE_SILENT = 5
 };
 
 FanMode fanMode = FAN_MODE_MANUAL;
-uint16_t fanManualPowerTarget = pow(2, PWM_RESOLUTION) - 1;
+float fanManualPowerTarget = 1;
 float userTempTarget = 25.0f;
+float power = 0;
 
-void changePWM(uint16_t targetValue)
+void changePower(float power)
 {
-    ledcWrite(PWM_CHANNEL, targetValue);
+    addPowerToHistory(power);
+    ledcWrite(PWM_CHANNEL, (pow(2, PWM_RESOLUTION) - 1) * power);
 }
 
 void initFan()
@@ -42,8 +50,8 @@ void initFan()
     fanMode = (FanMode)loadFanMode(fanMode);
     fanManualPowerTarget = loadFanManualPowerTarget(fanManualPowerTarget);
     userTempTarget = loadUserTempTarget(userTempTarget);
-
-    changePWM(fanManualPowerTarget);
+    
+    ledcWrite(PWM_CHANNEL, (pow(2, PWM_RESOLUTION) - 1) * fanManualPowerTarget);
 }
 
 void setFanMode(FanMode mode)
@@ -56,12 +64,12 @@ FanMode getFanMode()
     return fanMode;
 }
 
-void setFanManualPowerTarget(uint16_t power)
+void setFanManualPowerTarget(float power)
 {
     fanManualPowerTarget = power;
     saveFanManualPowerTarget(power);
 }
-uint16_t getFanManualPowerTarget()
+float getFanManualPowerTarget()
 {
     return fanManualPowerTarget;
 }
@@ -76,67 +84,36 @@ float getUserTempTarget()
     return userTempTarget;
 }
 
-bool isFanOn = true;
 uint32_t lastFanTimeMeasurement = 0;
-void updateFanAutoControlPower()
+void runFan()
 {
     if (millis() - lastFanTimeMeasurement > UPDATE_FREQUENCY)
     {
         lastFanTimeMeasurement = millis();
 
-        float extTemp = getAverageTemp();
-        float intTemp = getTemp();
-        float targetTemp = max(userTempTarget, extTemp);
-
-        Serial.print("Interior: ");
-        Serial.print(intTemp);
-        Serial.print(" °C | Exterior: ");
-        Serial.print(extTemp);
-        Serial.print(" °C | Usuario: ");
-        Serial.print(userTempTarget);
-        Serial.print(" °C | Objetivo: ");
-        Serial.print(targetTemp);
-
-        uint16_t newPower = 0;
-        float tempDiff = fabs(intTemp - targetTemp);
-        // Temperatura interior superior a la deseada
-        if (isFanOn ? intTemp > targetTemp : intTemp > targetTemp + TEMP_HYSTERESIS)
+        if (fanMode == FAN_MODE_OFF)
         {
-            float curve = ((1) / (1 + exp(-3 * (tempDiff - 1))));
-            // float curve = 0.1 + (1 - 0.1) / (1 + exp(-1.8 * (tempDiff - 2)));
-            Serial.print(" °C | Curva: ");
-            Serial.print(curve);
-            newPower = (pow(2, PWM_RESOLUTION) - 1) * curve;
-            isFanOn = true;
+            changePower(0);
         }
-        // Temperatura interior inferior a la deseada
-        else if (tempDiff > TEMP_HYSTERESIS)
+        else if (fanMode == FAN_MODE_TURBO)
         {
-            newPower = 0;
-            isFanOn = false;
+            changePower(1);
         }
-
-        if (newPower >= 0)
+        else if (fanMode == FAN_MODE_MANUAL)
         {
-            Serial.print(" | PWM: ");
-            Serial.println(newPower);
-            changePWM(newPower);
+            changePower(fanManualPowerTarget);
         }
-    }
-}
-
-void runFan()
-{
-    if (fanMode == FAN_MODE_OFF)
-    {
-        changePWM(0);
-    }
-    else if (fanMode == FAN_MODE_MANUAL)
-    {
-        changePWM(fanManualPowerTarget);
-    }
-    else if (fanMode == FAN_MODE_AUTO)
-    {
-        updateFanAutoControlPower();
+        else if (fanMode == FAN_MODE_AUTO_LOW)
+        {
+            changePower(updateFanAutoLowPower());
+        }
+        else if (fanMode == FAN_MODE_AUTO_HIGH)
+        {
+            changePower(updateFanAutoHighPower());
+        }
+        else if (fanMode == FAN_MODE_SILENT)
+        {
+            changePower(updateFanAutoControlPower());
+        }
     }
 }

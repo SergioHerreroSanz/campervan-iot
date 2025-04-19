@@ -27,8 +27,23 @@ class BLEModeCallbacks : public NimBLECharacteristicCallbacks
             }
             else if (modeValue == 2)
             {
-                Serial.println("Modo AUTOMÁTICO seleccionado desde BLE.");
-                setFanMode(FAN_MODE_AUTO);
+                Serial.println("Modo TURBO seleccionado desde BLE.");
+                setFanMode(FAN_MODE_TURBO);
+            }
+            else if (modeValue == 3)
+            {
+                Serial.println("Modo AUTO LOW seleccionado desde BLE.");
+                setFanMode(FAN_MODE_AUTO_LOW);
+            }
+            else if (modeValue == 4)
+            {
+                Serial.println("Modo AUTO HIGH seleccionado desde BLE.");
+                setFanMode(FAN_MODE_AUTO_HIGH);
+            }
+            else if (modeValue == 5)
+            {
+                Serial.println("Modo SILENT seleccionado desde BLE.");
+                setFanMode(FAN_MODE_SILENT);
             }
             pCharacteristic->notify();
         }

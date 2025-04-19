@@ -3,28 +3,26 @@
 #include <NimBLEDevice.h>
 #include <bleServerCallbacks.h>
 #include <bleModeCallbacks.h>
-#include <blePowerCallbacks.h>
+#include <bleManualPowerCallbacks.h>
 #include <bleTargetTempCallbacks.h>
-#include <bleIntTempCallbacks.h>
-#include <bleExtTempCallbacks.h>
+#include <bleCurrentPowerCallbacks.h>
 #include <bleRawTempCallbacks.h>
 #include <fan.h>
 
 #define BLE_DEVICE_NAME "ESP32-ventiladores"
 #define BLE_SERVICE_ID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define BLE_POWER_CHARACTERISTIC_ID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define BLE_MODE_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad1"
+#define BLE_MANUAL_POWER_CHARACTERISTIC_ID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define BLE_TARGET_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad2"
-#define BLE_INT_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad3"
-#define BLE_EXT_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad4"
-#define BLE_RAW_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad5"
+#define BLE_CURRENT_POWER_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad3"
+#define BLE_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad5"
 #define BLE_NOTIFY_FREQUENCY 1000
 
-NimBLECharacteristic *pwmCharacteristic;
 NimBLECharacteristic *modeCharacteristic;
+NimBLECharacteristic *manualPowerCharacteristic;
 NimBLECharacteristic *targetTempCharacteristic;
-NimBLECharacteristic *intTempCharacteristic;
-NimBLECharacteristic *extTempCharacteristic;
+
+NimBLECharacteristic *currentPowerCharacteristic;
 NimBLECharacteristic *rawTempCharacteristic;
 
 void initBLE()
@@ -40,33 +38,28 @@ void initBLE()
     pServer->setCallbacks(new MyBLEServerCallbacks());
     NimBLEService *pService = pServer->createService(BLE_SERVICE_ID);
 
-    pwmCharacteristic = pService->createCharacteristic(
-        BLE_POWER_CHARACTERISTIC_ID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
-    pwmCharacteristic->setCallbacks(new BLEPowerCallbacks());
-
     modeCharacteristic = pService->createCharacteristic(
         BLE_MODE_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     modeCharacteristic->setCallbacks(new BLEModeCallbacks());
+
+    manualPowerCharacteristic = pService->createCharacteristic(
+        BLE_MANUAL_POWER_CHARACTERISTIC_ID,
+        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+    manualPowerCharacteristic->setCallbacks(new BLEManualPowerCallbacks());
 
     targetTempCharacteristic = pService->createCharacteristic(
         BLE_TARGET_TEMP_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     targetTempCharacteristic->setCallbacks(new BLETargetTempCallbacks());
 
-    intTempCharacteristic = pService->createCharacteristic(
-        BLE_INT_TEMP_CHARACTERISTIC_ID,
+    currentPowerCharacteristic = pService->createCharacteristic(
+        BLE_CURRENT_POWER_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-    intTempCharacteristic->setCallbacks(new BLEIntTempCallbacks());
-
-    extTempCharacteristic = pService->createCharacteristic(
-        BLE_EXT_TEMP_CHARACTERISTIC_ID,
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-    extTempCharacteristic->setCallbacks(new BLEExtTempCallbacks());
+    currentPowerCharacteristic->setCallbacks(new BLECurrentPowerCallbacks());
 
     rawTempCharacteristic = pService->createCharacteristic(
-        BLE_RAW_TEMP_CHARACTERISTIC_ID,
+        BLE_TEMP_CHARACTERISTIC_ID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
     rawTempCharacteristic->setCallbacks(new BLERawTempCallbacks());
 
@@ -82,16 +75,12 @@ void notifyTemps()
     {
         lastNotifyMeasurement = millis();
 
-        float intTemp = getRawTemp();
-        intTempCharacteristic->setValue((uint8_t *)&intTemp, sizeof(intTemp));
-        intTempCharacteristic->notify();
+        float fanPower = getPower();
+        currentPowerCharacteristic->setValue((uint8_t *)&fanPower, sizeof(fanPower));
+        currentPowerCharacteristic->notify();
 
-        float extTemp = getRawTemp();
-        extTempCharacteristic->setValue((uint8_t *)&extTemp, sizeof(extTemp));
-        extTempCharacteristic->notify();
-
-        float rawTemp = getRawTemp();
-        rawTempCharacteristic->setValue((uint8_t *)&rawTemp, sizeof(rawTemp));
+        float temp = getTemp();
+        rawTempCharacteristic->setValue((uint8_t *)&temp, sizeof(temp));
         rawTempCharacteristic->notify();
     }
 }

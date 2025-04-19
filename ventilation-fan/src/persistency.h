@@ -3,9 +3,9 @@
 #include <Preferences.h>
 
 Preferences prefs;
-#define PERSISTENCY_FAN_NS "fan"
+#define PERSISTENCY_FAN_NS "ventilationFan"
 #define PERSISTENCY_FAN_MODE "fanMode"
-#define PERSISTENCY_FAN_MANUAL_POWER_TARGET "fanPWMTarget"
+#define PERSISTENCY_FAN_MANUAL_POWER_TARGET "fanPowerTarget"
 #define PERSISTENCY_USER_TEMP_TARGET "userTempTarget"
 
 void saveFanMode(uint8_t fanMode)
@@ -22,16 +22,16 @@ uint8_t loadFanMode(uint8_t defaultValue)
     return value;
 }
 
-void saveFanManualPowerTarget(uint16_t fanManualPowerTarget)
+void saveFanManualPowerTarget(float fanManualPowerTarget)
 {
     prefs.begin(PERSISTENCY_FAN_NS, false);
-    prefs.putInt(PERSISTENCY_FAN_MANUAL_POWER_TARGET, fanManualPowerTarget);
+    prefs.putFloat(PERSISTENCY_FAN_MANUAL_POWER_TARGET, fanManualPowerTarget);
     prefs.end();
 }
-uint16_t loadFanManualPowerTarget(uint16_t defaultValue)
+float loadFanManualPowerTarget(float defaultValue)
 {
     prefs.begin(PERSISTENCY_FAN_NS, true);
-    uint16_t value = prefs.getInt(PERSISTENCY_FAN_MANUAL_POWER_TARGET, defaultValue);
+    uint16_t value = prefs.getFloat(PERSISTENCY_FAN_MANUAL_POWER_TARGET, defaultValue);
     prefs.end();
     return value;
 }

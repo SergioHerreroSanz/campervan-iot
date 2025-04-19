@@ -7,7 +7,8 @@ class BLETargetTempCallbacks : public NimBLECharacteristicCallbacks
 {
     virtual void onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
     {
-        pCharacteristic->setValue(getUserTempTarget());
+        float targetTemp = getUserTempTarget();
+        pCharacteristic->setValue((uint8_t *)&targetTemp, sizeof(targetTemp));
     }
     void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) override
     {
