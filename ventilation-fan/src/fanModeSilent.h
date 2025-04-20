@@ -7,7 +7,7 @@
 #define UPDATE_FREQUENCY 2000 // Every 2s
 
 bool isFanOn = true;
-float updateFanAutoControlPower()
+float updateFanSilentPower()
 {
     float temp = getTemp();
     float newPower = getPower();

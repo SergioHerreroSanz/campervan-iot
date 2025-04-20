@@ -113,7 +113,7 @@ void runFan()
         }
         else if (fanMode == FAN_MODE_SILENT)
         {
-            changePower(updateFanAutoControlPower());
+            changePower(updateFanSilentPower());
         }
     }
 }

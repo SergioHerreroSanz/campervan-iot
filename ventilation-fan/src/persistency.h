@@ -31,7 +31,7 @@ void saveFanManualPowerTarget(float fanManualPowerTarget)
 float loadFanManualPowerTarget(float defaultValue)
 {
     prefs.begin(PERSISTENCY_FAN_NS, true);
-    uint16_t value = prefs.getFloat(PERSISTENCY_FAN_MANUAL_POWER_TARGET, defaultValue);
+    float value = prefs.getFloat(PERSISTENCY_FAN_MANUAL_POWER_TARGET, defaultValue);
     prefs.end();
     return value;
 }
