@@ -3,7 +3,8 @@
   top: 0;
   left: 0;
   right: 0;
-  padding: 0.75rem;
+  margin-top: 1.5rem;
+  padding: 0 1rem;
   z-index: 1;
 
   >div {
@@ -11,18 +12,49 @@
     justify-content: space-between;
   }
 
-  .title {
-    padding-top: 3rem;
-    width: max-content;
-    margin: 0 auto;
-    text-align: center;
-    font-size: 1.5rem;
+  &-connection {
+    display: flex;
+    align-items: center;
+
+    i {
+      display: block;
+      width: 6px;
+      height: 6px;
+      border-radius: 3px;
+      margin: 0.5rem;
+
+      &.device-connected {
+        background-color: blue;
+      }
+
+      &.device-disconnected {
+        background-color: red;
+      }
+    }
   }
+
+  &-data {
+    display: flex;
+    flex-wrap: nowrap;
+    text-align: center;
+
+    >* {
+      padding: 0 0.5rem;
+    }
+  }
+
 }
 
 .body {
+  .title {
+    padding-top: 9rem;
+    width: max-content;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 2rem;
+  }
 
-  .mode-wrapper {
+  .body-content {
     position: absolute;
     top: 0;
     left: 0;
@@ -33,6 +65,16 @@
     flex-direction: column;
     flex-wrap: nowrap;
     justify-content: center;
+
+    .connect-btn {
+      border: solid 2px;
+      border-radius: 1rem;
+      border-color: lightgray;
+      width: fit-content;
+      padding: 0.5rem 1rem;
+      margin: 0 auto;
+      font-size: 1.25rem;
+    }
 
     .mode {
       margin: .5rem 1rem;
@@ -49,14 +91,16 @@
         &:has(.mode-content) .mode-label {
           border-radius: calc(0.75rem - 2px) calc(0.75rem - 2px) 0 0;
         }
-        
-        .mode-content {}
       }
 
       &-label,
       &-content {
         padding: 1rem;
         position: relative;
+      }
+
+      &-label {
+        font-size: 1.25rem;
       }
     }
 
@@ -81,12 +125,17 @@
         right: 0.5rem;
         display: flex;
         align-items: center;
-      }
 
-      i {
-        width: 26px;
-        height: 26px;
-        padding: 0 0.5rem;
+        i {
+          padding: 0 0.25rem;
+          transform: translateY(-2px);
+        }
+      }
+    }
+
+    #silent {
+      input {
+        margin-left: 1rem;
       }
     }
   }

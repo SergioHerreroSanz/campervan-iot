@@ -1,65 +1,82 @@
 <div class="header">
   <div>
-    <div class="connection">
-      <i [class]="(connected$|async) ? 'device-connected' : 'device-disconected'"></i>
-      <button *ngIf="!(connected$ | async) else connected" (click)="connectToDevice()">Conectar con BLE</button>
-
-      <ng-template #connected>
-        Conectado
-      </ng-template>
+    <div class="header-connection">
+      <i [class]="(connected$ | async) ? 'device-connected' : 'device-disconnected'"></i>
+      {{(connected$ | async) ? "Conectado":"Desconectado"}}
     </div>
-    <div class="data">
-      <div *ngIf=" rawTemp$ | async as temp">{{ temp | number : "1.2-2" }}ºC</div>
-      <div *ngIf=" currPower$ | async as power">{{ power }}%</div>
-    </div>
-  </div>
-  <div class="title">
-    Control de ventiladores
-  </div>
-</div>
-
-<div class="body" *ngIf="connected$ | async ">
-  <div class="mode-wrapper">
-    <div id="manual" class="mode" [class.active]="(mode$ | async) == availableModes.FAN_MODE_MANUAL">
-      <div class="mode-label" (click)="changeMode(availableModes.FAN_MODE_MANUAL)">Modo Manual</div>
-      <div class="mode-content" *ngIf="(mode$|async) == availableModes.FAN_MODE_MANUAL">
-        <input class="mode-slider" type="range" min="0" max="100" [value]="userPower$ | async"
-          (input)="changePower($event)" />
-        <span>{{ (userPower$ | async ) }}%</span>
+    <div class="header-data">
+      <div *ngIf=" rawTemp$ | async as temp">
+        <i class="fa fa-thermometer-full">🌡️</i>
+        {{ temp | number : "1.1-1" }}ºC
       </div>
-    </div>
-
-    <div id="turbo" class="mode" [class.active]="(mode$ | async) == availableModes.FAN_MODE_TURBO">
-      <div class="mode-label" (click)="changeMode(availableModes.FAN_MODE_TURBO)"> Modo Turbo </div>
-    </div>
-
-    <div id="auto" class="mode"
-      [class.active]="(mode$ | async) == availableModes.FAN_MODE_AUTO_LOW || (mode$ | async) == availableModes.FAN_MODE_AUTO_HIGH">
-      <div class="mode-label" (click)="changeModeAuto($event)">
-        Auto
-        <div class="mode-toggle">
-          <i class="sun-small">-</i>
-          <label class="input-toggle">
-            <input type="checkbox" [(ngModel)]="autoMode" (click)="$event.stopPropagation()"
-              (change)="changeModeAuto($event)">
-            <span class="toggle round"></span>
-          </label>
-          <i class="sun-big">+</i>
-        </div>
-      </div>
-    </div>
-
-    <div id="silent" class="mode" [class.active]="(mode$ | async) == availableModes.FAN_MODE_SILENT">
-      <div class="mode-label" (click)="changeMode(availableModes.FAN_MODE_SILENT)">
-        Modo noche
-      </div>
-      <div class="mode-content" *ngIf="(mode$ | async) == availableModes.FAN_MODE_SILENT">
-        <div>
-          <label for="temp-target-input">Target temp:</label>
-          <input id="temp-target-input" type="number" min="0" max="40" step="0.1" [value]="targetTemp$ | async"
-            (input)="chargeTargeTemp($event)" />
-        </div>
+      <div *ngIf="(currPower$ | async) != undefined">
+        <i class="fa fa-fan">🌀</i>
+        {{ (currPower$ | async) || 0 }}%
       </div>
     </div>
   </div>
 </div>
+
+<div class="body">
+  <ng-container *ngIf="(connected$ | async); else connectBtn">
+    <div class="body-content">
+      <div id="manual" class="mode" [class.active]="(mode$ | async) == availableModes.FAN_MODE_MANUAL">
+        <div class="mode-label" (click)="changeMode(availableModes.FAN_MODE_MANUAL)">
+          <i class="fa fa-tools">🛠️</i>
+          Modo Manual
+        </div>
+        <div class="mode-content" *ngIf="(mode$|async) == availableModes.FAN_MODE_MANUAL">
+          <input class="mode-slider" type="range" min="0" max="100" [value]="userPower$ | async"
+            (input)="changePower($event)" />
+          <span>{{ (userPower$ | async ) }}%</span>
+        </div>
+      </div>
+
+      <div id="turbo" class="mode" [class.active]="(mode$ | async) == availableModes.FAN_MODE_TURBO">
+        <div class="mode-label" (click)="changeMode(availableModes.FAN_MODE_TURBO)">
+          <i class="fa fa-bolt">⚡</i>
+          Modo Turbo
+        </div>
+      </div>
+
+      <div id="auto" class="mode"
+        [class.active]="(mode$ | async) == availableModes.FAN_MODE_AUTO_LOW || (mode$ | async) == availableModes.FAN_MODE_AUTO_HIGH">
+        <div class="mode-label" (click)="changeModeAuto($event)">
+          <i class="fa fa-robot">🤖</i>
+          Auto
+          <div class="mode-toggle">
+            <i class="fa fa-cloud-sun">🌤️</i>
+            <label class="input-toggle">
+              <input type="checkbox" [(ngModel)]="autoMode" (click)="$event.stopPropagation()"
+                (change)="changeModeAuto($event)">
+              <span class="toggle round"></span>
+            </label>
+            <i class="fa fa-sun">☀️</i>
+          </div>
+        </div>
+      </div>
+
+      <div id="silent" class="mode" [class.active]="(mode$ | async) == availableModes.FAN_MODE_SILENT">
+        <div class="mode-label" (click)="changeMode(availableModes.FAN_MODE_SILENT)">
+          <i class="fa fa-volume-mute">🔇</i>
+          Modo noche
+        </div>
+        <div class="mode-content" *ngIf="(mode$ | async) == availableModes.FAN_MODE_SILENT">
+          <div>
+            <label for="temp-target-input">Target temp:</label>
+            <input id="temp-target-input" type="number" min="0" max="40" step="0.1" [value]="targetTemp$ | async"
+              (input)="chargeTargeTemp($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<ng-template #connectBtn>
+  <!-- <div class="title"> Control de ventiladores </div> -->
+
+  <div class="body-content">
+    <button class="connect-btn" (click)="connectToDevice()"> Conectar </button>
+  </div>
+</ng-template>

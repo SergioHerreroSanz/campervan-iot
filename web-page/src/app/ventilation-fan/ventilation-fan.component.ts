@@ -43,7 +43,7 @@ export class VentilationFanComponent {
         }
       }));
       this.userPower$ = this.vfs.userPower$.asObservable().pipe(map(val => Math.round(val * this.resolution)));
-      this.targetTemp$ = this.vfs.targetTemp$.asObservable();
+      this.targetTemp$ = this.vfs.targetTemp$.asObservable().pipe(map(val => Math.round(val * 10) / 10));
       this.currPower$ = this.vfs.currPower$.asObservable().pipe(map(val => Math.round(val * this.resolution)));
       this.rawTemp$ = this.vfs.rawTemp$.asObservable().pipe();
     })
