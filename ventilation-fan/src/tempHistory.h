@@ -33,7 +33,18 @@ float getAverageTemp(uint8_t count)
     return sum / validCount;
 }
 
-float getTemp()
+float getTemp(uint8_t count)
+{
+    if (count > TEMP_HISTORY_SIZE)
+    {
+        count = TEMP_HISTORY_SIZE;
+    }
+    float value = tempHistory[TEMP_HISTORY_SIZE - count];
+
+    return value > 0 ? value : getTemp(count - 1)
+}
+
+float getLastTemp()
 {
     return tempHistory[TEMP_HISTORY_SIZE - 1];
 }

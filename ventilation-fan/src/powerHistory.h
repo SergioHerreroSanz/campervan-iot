@@ -33,7 +33,7 @@ float getAveragePower(uint8_t count)
     return sum / validCount;
 }
 
-float getPower()
+float getLastPower()
 {
     return powerHistory[POWER_HISTORY_SIZE - 1];
 }

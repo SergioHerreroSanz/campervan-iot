@@ -9,7 +9,7 @@
 #define DHT_TYPE DHT11
 #define TEMP_HISTORY_SIZE 60    // 5 minutes
 #define TEMP_CURRENT_AVG_SIZE 4 // Last 20 seconds
-#define TEMP_POLL_TIMER 2000    // Poll every 5 seconds
+#define TEMP_POLL_TIMER 60_000    // Poll every minute
 DHT dht(DHT_PIN, DHT_TYPE);
 
 void initTempSensor()

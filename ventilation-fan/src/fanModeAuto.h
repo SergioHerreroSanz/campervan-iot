@@ -5,7 +5,7 @@
 
 float updateFanAutoLowPower()
 {
-    float temp = getTemp();
+    float temp = getLastTemp();
     int midpoint = 38;
     float steepness = 0.25;
     float power = 1 / (1 + exp(-steepness * (temp - midpoint)));
@@ -14,7 +14,7 @@ float updateFanAutoLowPower()
 
 float updateFanAutoHighPower()
 {
-    float temp = getTemp();
+    float temp = getLastTemp();
     int midpoint = 33;
     float steepness = 0.4;
     float power = 1 / (1 + exp(-steepness * (temp - midpoint)));

@@ -7,7 +7,7 @@ class BLECurrentPowerCallbacks : public NimBLECharacteristicCallbacks
 {
     virtual void onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
     {
-        float power = getPower();
+        float power = getLastPower();
         pCharacteristic->setValue((uint8_t *)&power, sizeof(power));
     }
 };

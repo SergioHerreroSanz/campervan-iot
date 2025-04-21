@@ -11,7 +11,7 @@
 #define PWM_CHANNEL 0
 #define PWM_FREQUENCY 25000
 constexpr int PWM_RESOLUTION = 8;
-#define UPDATE_FREQUENCY 2000 // Every s
+#define UPDATE_FREQUENCY 60_000 // Every minute
 #define TEMP_HYSTERESIS 1.0f  // In celsius
 #define MIN_FAN_POWER 0.2f    // Percentage
 

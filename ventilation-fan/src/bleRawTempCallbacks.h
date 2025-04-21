@@ -7,7 +7,7 @@ class BLERawTempCallbacks : public NimBLECharacteristicCallbacks
 {
     virtual void onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
     {
-        float temp = getTemp();
+        float temp = getLastTemp();
         pCharacteristic->setValue((uint8_t *)&temp, sizeof(temp));
     }
 };

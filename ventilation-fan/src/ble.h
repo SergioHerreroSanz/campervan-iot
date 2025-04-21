@@ -75,11 +75,11 @@ void notifyTemps()
     {
         lastNotifyMeasurement = millis();
 
-        float fanPower = getPower();
+        float fanPower = getLastPower();
         currentPowerCharacteristic->setValue((uint8_t *)&fanPower, sizeof(fanPower));
         currentPowerCharacteristic->notify();
 
-        float temp = getTemp();
+        float temp = getLastTemp();
         rawTempCharacteristic->setValue((uint8_t *)&temp, sizeof(temp));
         rawTempCharacteristic->notify();
     }
