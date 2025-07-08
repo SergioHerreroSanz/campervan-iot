@@ -11,9 +11,9 @@
 #define PWM_CHANNEL 0
 #define PWM_FREQUENCY 25000
 constexpr int PWM_RESOLUTION = 8;
-#define UPDATE_FREQUENCY 60_000 // Every minute
-#define TEMP_HYSTERESIS 1.0f  // In celsius
-#define MIN_FAN_POWER 0.2f    // Percentage
+#define FAN_UPDATE_FREQUENCY 6000 // Every minute
+#define TEMP_HYSTERESIS 1.0f      // In celsius
+#define MIN_FAN_POWER 0.2f        // Percentage
 
 #define DEFAULT_FAN_MODE = FAN_MODE_MANUAL;
 #define DEFAULT_FAN_MANUAL_POWER_TARGET = 255;
@@ -38,7 +38,7 @@ float power = 0;
 void changePower(float power)
 {
     addPowerToHistory(power);
-    ledcWrite(PWM_CHANNEL, (pow(2, PWM_RESOLUTION) - 1) * power);
+    ledcWrite(PWM_CHANNEL, (pow(2, PWM_RESOLUTION) - 1) * (1 - power));
 }
 
 void initFan()
@@ -50,14 +50,43 @@ void initFan()
     fanMode = (FanMode)loadFanMode(fanMode);
     fanManualPowerTarget = loadFanManualPowerTarget(fanManualPowerTarget);
     userTempTarget = loadUserTempTarget(userTempTarget);
-    
+
     ledcWrite(PWM_CHANNEL, (pow(2, PWM_RESOLUTION) - 1) * fanManualPowerTarget);
+}
+
+void updateFan()
+{
+    if (fanMode == FAN_MODE_OFF)
+    {
+        changePower(0);
+    }
+    else if (fanMode == FAN_MODE_TURBO)
+    {
+        changePower(1);
+    }
+    else if (fanMode == FAN_MODE_MANUAL)
+    {
+        changePower(fanManualPowerTarget);
+    }
+    else if (fanMode == FAN_MODE_AUTO_LOW)
+    {
+        changePower(updateFanAutoLowPower());
+    }
+    else if (fanMode == FAN_MODE_AUTO_HIGH)
+    {
+        changePower(updateFanAutoHighPower());
+    }
+    else if (fanMode == FAN_MODE_SILENT)
+    {
+        changePower(updateFanSilentPower());
+    }
 }
 
 void setFanMode(FanMode mode)
 {
     fanMode = mode;
     saveFanMode(mode);
+    updateFan();
 }
 FanMode getFanMode()
 {
@@ -68,6 +97,7 @@ void setFanManualPowerTarget(float power)
 {
     fanManualPowerTarget = power;
     saveFanManualPowerTarget(power);
+    updateFan();
 }
 float getFanManualPowerTarget()
 {
@@ -87,33 +117,9 @@ float getUserTempTarget()
 uint32_t lastFanTimeMeasurement = 0;
 void runFan()
 {
-    if (millis() - lastFanTimeMeasurement > UPDATE_FREQUENCY)
+    if (millis() - lastFanTimeMeasurement > FAN_UPDATE_FREQUENCY)
     {
         lastFanTimeMeasurement = millis();
-
-        if (fanMode == FAN_MODE_OFF)
-        {
-            changePower(0);
-        }
-        else if (fanMode == FAN_MODE_TURBO)
-        {
-            changePower(1);
-        }
-        else if (fanMode == FAN_MODE_MANUAL)
-        {
-            changePower(fanManualPowerTarget);
-        }
-        else if (fanMode == FAN_MODE_AUTO_LOW)
-        {
-            changePower(updateFanAutoLowPower());
-        }
-        else if (fanMode == FAN_MODE_AUTO_HIGH)
-        {
-            changePower(updateFanAutoHighPower());
-        }
-        else if (fanMode == FAN_MODE_SILENT)
-        {
-            changePower(updateFanSilentPower());
-        }
+        updateFan();
     }
 }

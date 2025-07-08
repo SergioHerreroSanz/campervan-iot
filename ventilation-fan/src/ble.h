@@ -17,22 +17,122 @@
 #define BLE_CURRENT_POWER_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad3"
 #define BLE_TEMP_CHARACTERISTIC_ID "6aee789a-4bcd-4c90-a8ef-456dfe253ad5"
 #define BLE_NOTIFY_FREQUENCY 1000
+#define BLE_SEARCH_TIME 5000
 
 NimBLECharacteristic *modeCharacteristic;
 NimBLECharacteristic *manualPowerCharacteristic;
 NimBLECharacteristic *targetTempCharacteristic;
-
 NimBLECharacteristic *currentPowerCharacteristic;
 NimBLECharacteristic *rawTempCharacteristic;
+NimBLEClient *client;
+NimBLERemoteCharacteristic *remoteChar;
+boolean serverMode = false;
 
-void initBLE()
+boolean conectServer()
 {
+    delay(100);
+    NimBLEDevice::deinit(true);
+    delay(100);
+    NimBLEDevice::init("ESP32Client");
+    NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+    NimBLEScan *scan = NimBLEDevice::getScan();
+
+    scan->clearResults();
+    scan->setActiveScan(true);
+    scan->setInterval(45);
+    scan->setWindow(15);
+    scan->start(BLE_SEARCH_TIME, false);
+
+    Serial.println("Escaneando dispositivos BLE...");
+    delay(BLE_SEARCH_TIME + 1000);
+
+    NimBLEScanResults results = scan->getResults();
+
+    Serial.print(results.getCount());
+    Serial.println(" dispositivos encontrados");
+
+    for (int i = 0; i < results.getCount(); i++)
+    {
+        const NimBLEAdvertisedDevice *dev = results.getDevice(i);
+
+        auto name = dev->getName();
+        if (!name.empty() && strcmp(name.c_str(), BLE_DEVICE_NAME) == 0)
+        {
+            Serial.println("Servidor encontrado, intentando conectar...");
+
+            client = NimBLEDevice::createClient();
+            if (!client->connect(dev))
+            {
+                Serial.println("❌ Error de conexión");
+                NimBLEDevice::deleteClient(client);
+                return false;
+            }
+
+            NimBLERemoteService *service = client->getService(BLE_SERVICE_ID);
+            if (!service)
+            {
+                Serial.println("❌ Servicio no encontrado");
+                client->disconnect();
+                return false;
+            }
+
+            remoteChar = service->getCharacteristic(BLE_CURRENT_POWER_CHARACTERISTIC_ID);
+            if (!remoteChar)
+            {
+                Serial.println("❌ Característica no encontrada");
+                client->disconnect();
+                return false;
+            }
+
+            if (remoteChar->canNotify())
+            {
+                if (remoteChar->canNotify())
+                {
+                    remoteChar->subscribe(true, [](NimBLERemoteCharacteristic *c, uint8_t *data, size_t len, bool isNotify)
+                                          {
+                                              if (len < sizeof(float))
+                                              {
+                                                  Serial.println("❌ Notificación muy corta");
+                                                  return;
+                                              }
+
+                                              float power = 0;
+                                              memcpy(&power, data, sizeof(float)); 
+
+                                              Serial.print("🔧 Power recibido (float): ");
+                                              Serial.println(power, 2);
+                                              changePower(power); });
+
+                    Serial.println("✅ Suscrito a característica");
+                }
+            }
+
+            return true;
+        }
+    }
+
+    scan->clearResults();
+    NimBLEDevice::deinit(true);
+    Serial.println("No se encontró otro ESP32");
+
+    return false;
+}
+
+void startServer()
+{
+    Serial.println("Iniciando servidor");
+
     NimBLEDevice::init(BLE_DEVICE_NAME);
     NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
-    NimBLEAdvertisementData responseData;
-    responseData.setName(BLE_DEVICE_NAME);
-    responseData.setShortName(BLE_DEVICE_NAME);
-    pAdvertising->setScanResponseData(responseData);
+
+    NimBLEAdvertisementData advData;
+    advData.setName(BLE_DEVICE_NAME);
+    advData.addServiceUUID(BLE_SERVICE_ID);
+    pAdvertising->setAdvertisementData(advData);
+
+    NimBLEAdvertisementData scanRespData;
+    scanRespData.setShortName(BLE_DEVICE_NAME);
+    pAdvertising->setScanResponseData(scanRespData);
 
     NimBLEServer *pServer = NimBLEDevice::createServer();
     pServer->setCallbacks(new MyBLEServerCallbacks());
@@ -65,13 +165,22 @@ void initBLE()
 
     pService->start();
     pAdvertising->start();
+    serverMode = true;
     Serial.println("Esperando conexión...");
+}
+
+void initBLE()
+{
+    if (!conectServer())
+    {
+        startServer();
+    }
 }
 
 uint32_t lastNotifyMeasurement = 0;
 void notifyTemps()
 {
-    if (millis() - lastNotifyMeasurement > BLE_NOTIFY_FREQUENCY)
+    if (serverMode && millis() - lastNotifyMeasurement > BLE_NOTIFY_FREQUENCY)
     {
         lastNotifyMeasurement = millis();
 
