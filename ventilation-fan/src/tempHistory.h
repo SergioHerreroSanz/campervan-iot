@@ -41,7 +41,7 @@ float getTemp(uint8_t count)
     }
     float value = tempHistory[TEMP_HISTORY_SIZE - count];
 
-    return value > 0 ? value : getTemp(count - 1)
+    return value > 0 ? value : getTemp(count - 1);
 }
 
 float getLastTemp()
