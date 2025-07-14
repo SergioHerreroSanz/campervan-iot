@@ -1,6 +1,7 @@
 #pragma once
 
 #include <NimBLEDevice.h>
+#include <bleClientCallbacks.h>
 #include <bleServerCallbacks.h>
 #include <bleModeCallbacks.h>
 #include <bleManualPowerCallbacks.h>
@@ -27,6 +28,52 @@ NimBLECharacteristic *rawTempCharacteristic;
 NimBLEClient *client;
 NimBLERemoteCharacteristic *remoteChar;
 boolean serverMode = false;
+
+bool subscribeToCharacteristic(
+    NimBLERemoteService *service,
+    const char *uuid,
+    size_t expectedSize,
+    std::function<void(uint8_t *data)> onNotify)
+{
+    NimBLERemoteCharacteristic *c = service->getCharacteristic(uuid);
+    if (!c)
+    {
+        Serial.print("❌ Característica no encontrada: ");
+        Serial.println(uuid);
+        return false;
+    }
+
+    if (!c->canNotify())
+    {
+        Serial.print("⚠️ La característica no permite notificaciones: ");
+        Serial.println(uuid);
+        return false;
+    }
+
+    bool ok = c->subscribe(true, [expectedSize, onNotify, uuid](NimBLERemoteCharacteristic *c, uint8_t *data, size_t len, bool isNotify)
+                           {
+                               if (len < expectedSize)
+                               {
+                                   Serial.print("❌ Notificación muy corta en ");
+                                   Serial.println(uuid);
+                                   return;
+                               }
+
+                               onNotify(data); });
+
+    if (ok)
+    {
+        Serial.print("✅ Suscrito a ");
+        Serial.println(uuid);
+    }
+    else
+    {
+        Serial.print("❌ Error al suscribirse a ");
+        Serial.println(uuid);
+    }
+
+    return ok;
+}
 
 boolean conectServer()
 {
@@ -61,6 +108,7 @@ boolean conectServer()
             Serial.println("Servidor encontrado, intentando conectar...");
 
             client = NimBLEDevice::createClient();
+            client->setClientCallbacks(new MyBLEClientCallbacks());
             if (!client->connect(dev))
             {
                 Serial.println("❌ Error de conexión");
@@ -76,36 +124,56 @@ boolean conectServer()
                 return false;
             }
 
-            remoteChar = service->getCharacteristic(BLE_CURRENT_POWER_CHARACTERISTIC_ID);
-            if (!remoteChar)
-            {
-                Serial.println("❌ Característica no encontrada");
-                client->disconnect();
-                return false;
-            }
-
-            if (remoteChar->canNotify())
-            {
-                if (remoteChar->canNotify())
+            subscribeToCharacteristic(
+                service,
+                BLE_CURRENT_POWER_CHARACTERISTIC_ID,
+                sizeof(float),
+                [](uint8_t *data)
                 {
-                    remoteChar->subscribe(true, [](NimBLERemoteCharacteristic *c, uint8_t *data, size_t len, bool isNotify)
-                                          {
-                                              if (len < sizeof(float))
-                                              {
-                                                  Serial.println("❌ Notificación muy corta");
-                                                  return;
-                                              }
+                    float power;
+                    memcpy(&power, data, sizeof(float));
+                    Serial.print("🔧 Power recibido: ");
+                    Serial.println(power, 2);
+                    changePower(power);
+                });
 
-                                              float power = 0;
-                                              memcpy(&power, data, sizeof(float)); 
+            subscribeToCharacteristic(
+                service,
+                BLE_MODE_CHARACTERISTIC_ID,
+                sizeof(uint8_t),
+                [](uint8_t *data)
+                {
+                    FanMode mode = static_cast<FanMode>(data[0]);
+                    Serial.print("📥 Fan mode recibido: ");
+                    Serial.println((int)mode);
+                    setFanMode(mode);
+                });
 
-                                              Serial.print("🔧 Power recibido (float): ");
-                                              Serial.println(power, 2);
-                                              changePower(power); });
+            subscribeToCharacteristic(
+                service,
+                BLE_MANUAL_POWER_CHARACTERISTIC_ID,
+                sizeof(float),
+                [](uint8_t *data)
+                {
+                    float manualPower;
+                    memcpy(&manualPower, data, sizeof(float));
+                    Serial.print("📥 Potencia manual recibida: ");
+                    Serial.println(manualPower, 2);
+                    setFanManualPowerTarget(manualPower);
+                });
 
-                    Serial.println("✅ Suscrito a característica");
-                }
-            }
+            subscribeToCharacteristic(
+                service,
+                BLE_TARGET_TEMP_CHARACTERISTIC_ID,
+                sizeof(float),
+                [](uint8_t *data)
+                {
+                    float targetTemp;
+                    memcpy(&targetTemp, data, sizeof(float));
+                    Serial.print("📥 Temperatura objetivo recibida: ");
+                    Serial.println(targetTemp, 2);
+                    setUserTempTarget(targetTemp);
+                });
 
             return true;
         }

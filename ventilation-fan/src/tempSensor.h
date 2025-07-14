@@ -11,20 +11,6 @@
 #define TEMP_POLL_TIMER 60000   // Poll every minute
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
 
-void initTempSensor()
-{
-    Wire.begin(SDA_PIN, SCL_PIN);
-
-    if (!sht31.begin(0x44))
-    {
-        Serial.println("❌ Error al iniciar el sensor SHT31.");
-    }
-    else
-    {
-        Serial.println("🌡️ Sensor de temperatura iniciado.");
-    }
-}
-
 uint32_t lastTempTimeMeasurement = 0;
 void pollTempSensor()
 {
@@ -42,5 +28,20 @@ void pollTempSensor()
         {
             Serial.println("⚠️ Error al leer la temperatura (NaN).");
         }
+    }
+}
+
+void initTempSensor()
+{
+    Wire.begin(SDA_PIN, SCL_PIN);
+
+    if (!sht31.begin(0x44))
+    {
+        Serial.println("❌ Error al iniciar el sensor SHT31.");
+    }
+    else
+    {
+        Serial.println("🌡️ Sensor de temperatura iniciado.");
+        pollTempSensor();
     }
 }
